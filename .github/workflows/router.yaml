@@ -18,9 +18,9 @@ jobs:
               repo: event.repository.name,
               sha: event.after,
               state: 'pending',
-              target_url: `${context.serverUrl}/${context.repo}/actions/runs/${context.runId}`,
-              description: 'CI is running in progress',
-              context: 'workflows/ci',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: 'In progress',
+              context: 'CI',
             });
     outputs:
       id: ${{ steps.create-check-run.outputs.result.id }}
@@ -57,7 +57,7 @@ jobs:
               repo: event.repository.name,
               sha: event.after,
               state,
-              target_url: `${context.serverUrl}/${context.repo}/actions/runs/${context.runId}`,
-              description: `CI is ${RESULT}`,
-              context: 'workflows/ci',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: `Successful`,
+              context: 'CI',
             });
