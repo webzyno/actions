@@ -22,6 +22,8 @@ jobs:
           ref: ${{ fromJSON(inputs.event).ref }}
           token: ${{ secrets.PAT }}
       - uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: yarn install
       - name: Build
         run: yarn build
   lint:
@@ -35,5 +37,7 @@ jobs:
           ref: ${{ fromJSON(inputs.event).ref }}
           token: ${{ secrets.PAT }}
       - uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: yarn install
       - name: Lint
         run: yarn lint
