@@ -30,6 +30,7 @@ jobs:
     needs: create-status
     with:
       event: ${{ toJSON(github.event.client_payload.event) }}
+      sha: ${{ github.event.client_payload.sha }}
     secrets:
       PAT: ${{ secrets.PAT }}
   update-status:
@@ -42,6 +43,7 @@ jobs:
         uses: actions/github-script@v6
         id: get-last-job
         with:
+          result-encoding: string
           script: |
             const result = await github.rest.actions.listJobsForWorkflowRun({
               owner: context.repo.owner,
@@ -49,13 +51,25 @@ jobs:
               run_id: context.runId,
               filter: 'latest',
             });
-            console.log(result.data.jobs);
-            return result.data.jobs[0];
+
+            const routes = result.data.jobs.slice(1, -1);
+            let conclusion = 'success';
+            for (const job of routes) {
+              if (job.conclusion === 'failure') {
+                conclusion = 'failure';
+                break;
+              }
+              if (job.conclusion == 'cancelled') {
+                conclusion = 'cancelled';
+              }
+            }
+
+            return conclusion;
       - name: Update commit status
         uses: actions/github-script@v6
         id: upadte-commit-status
         env:
-          CONSLUSION: ${{ steps.get-last-job.outputs.result.conclusion }}
+          CONSLUSION: ${{ steps.get-last-job.outputs.result }}
         with:
           github-token: ${{ secrets.PAT }}
           script: |
