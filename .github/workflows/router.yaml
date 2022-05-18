@@ -25,7 +25,7 @@ jobs:
             });
   run-workflow:
     name: ${{ github.event.client_payload.name }}
-    uses: ./.github/workflows/${{ github.event.client_payload.workflow }}
+    uses: ./.github/workflows/${{ github.event.client_payload.workflow }}.yaml
     if: ${{ always() }}
     needs: create-status
     with:
