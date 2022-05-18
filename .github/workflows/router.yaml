@@ -5,29 +5,28 @@ jobs:
   create-status:
     name: Create commit status
     runs-on: ubuntu-latest
+    if: ${{ github.event.client_payload.status.create }}
     steps:
       - name: Create commit status
         uses: actions/github-script@v6
-        id: create-check-run
         with:
           github-token: ${{ secrets.PAT }}
           script: |
-            const event = context.payload.client_payload.event;
-            const result = await github.rest.repos.createCommitStatus({
+            const client_payload = context.payload.client_payload;
+            const event = client_payload.event;
+            await github.rest.repos.createCommitStatus({
               owner: event.repository.owner.name,
               repo: event.repository.name,
-              sha: event.after,
+              sha: client_payload.sha,
               state: 'pending',
               target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
               description: 'In progress',
-              context: 'CI',
+              context: client_payload.status.context,
             });
-    outputs:
-      id: ${{ steps.create-check-run.outputs.result.id }}
-  accounts-ci:
-    name: Accounts - CI
-    uses: ./.github/workflows/accounts-ci.yaml
-    if: ${{ github.event.client_payload.event.repository.full_name == 'webzyno/accounts' }}
+  run-workflow:
+    name: ${{ github.event.client_payload.name }}
+    uses: ./.github/workflows/${{ github.event.client_payload.workflow }}
+    if: ${{ always() }}
     needs: create-status
     with:
       event: ${{ toJSON(github.event.client_payload.event) }}
@@ -36,14 +35,14 @@ jobs:
   update-status:
     name: Update commit status
     runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: accounts-ci
+    if: ${{ always() && github.event.client_payload.status.create }}
+    needs: run-workflow
     steps:
       - name: Update commit status
         uses: actions/github-script@v6
         id: upadte-commit-status
         env:
-          RESULT: ${{ needs.accounts-ci.result }}
+          RESULT: ${{ needs.run-workflow.result }}
         with:
           github-token: ${{ secrets.PAT }}
           script: |
@@ -51,13 +50,14 @@ jobs:
             const { RESULT } = process.env;
             const state = (RESULT === 'cancelled' || RESULT === 'skipped') ? 'success' : RESULT;
 
-            const event = context.payload.client_payload.event;
-            const result = await github.rest.repos.createCommitStatus({
+            const client_payload = context.payload.client_payload;
+            const event = client_payload.event;
+            await github.rest.repos.createCommitStatus({
               owner: event.repository.owner.name,
               repo: event.repository.name,
-              sha: event.after,
+              sha: client_payload.sha,
               state,
               target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
               description: `Successful`,
-              context: 'CI',
+              context: client_payload.status.context,
             });
