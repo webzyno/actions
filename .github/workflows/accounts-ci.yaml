@@ -30,6 +30,11 @@ jobs:
         run: yarn install
       - name: Build
         run: yarn build
+      - name: Archive built website
+        uses: actions/upload-artifact@v3
+        with:
+          name: website
+          path: out/
   lint:
     name: Lint
     runs-on: ubuntu-latest
