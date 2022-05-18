@@ -3,24 +3,24 @@ on:
   repository_dispatch: {}
 jobs:
   create-status:
-    name: Set commit status
+    name: Create commit status
     runs-on: ubuntu-latest
     steps:
-      - name: Create check run
+      - name: Create commit status
         uses: actions/github-script@v6
         id: create-check-run
         with:
           github-token: ${{ secrets.PAT }}
           script: |
             const event = context.payload.client_payload.event;
-            const result = await github.rest.checks.create({
+            const result = await github.rest.repos.createCommitStatus({
               owner: event.repository.owner.name,
               repo: event.repository.name,
-              name: 'CI',
-              head_sha: event.after,
-              details_url: `${context.serverUrl}/${context.repo}/actions/runs/${context.runId}`,
-              external_id: context.runId,
-              status: 'in_progress',
+              sha: event.after,
+              state: 'pending',
+              target_url: `${context.serverUrl}/${context.repo}/actions/runs/${context.runId}`,
+              description: 'CI is running in progress',
+              context: 'workflows/ci',
             });
     outputs:
       id: ${{ steps.create-check-run.outputs.result.id }}
@@ -33,27 +33,31 @@ jobs:
       event: ${{ toJSON(github.event.client_payload.event) }}
     secrets:
       PAT: ${{ secrets.PAT }}
-  update-check-run:
-    name: Update check run
+  update-status:
+    name: Update commit status
     runs-on: ubuntu-latest
     if: ${{ always() }}
     needs: accounts-ci
     steps:
-      - name: Update check run
+      - name: Update commit status
         uses: actions/github-script@v6
-        id: upadte-check-run
+        id: upadte-commit-status
         env:
-          ID: ${{ needs.create-check-run.outputs.result.id }}
           RESULT: ${{ needs.accounts-ci.result }}
         with:
           github-token: ${{ secrets.PAT }}
           script: |
-            const { ID, RESULT } = process.env;
+            // parse result
+            const { RESULT } = process.env;
+            const state = (RESULT === 'cancelled' || RESULT === 'skipped') ? 'success' : RESULT;
+
             const event = context.payload.client_payload.event;
-            octokit.rest.checks.update({
+            const result = await github.rest.repos.createCommitStatus({
               owner: event.repository.owner.name,
               repo: event.repository.name,
-              check_run_id: `${ID}`,
-              status: 'completed',
-              conclusion: `${RESULT}`,
+              sha: event.after,
+              state,
+              target_url: `${context.serverUrl}/${context.repo}/actions/runs/${context.runId}`,
+              description: `CI is ${RESULT}`,
+              context: 'workflows/ci',
             });
