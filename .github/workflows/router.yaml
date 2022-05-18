@@ -2,11 +2,58 @@ name: Workflow router
 on:
   repository_dispatch: {}
 jobs:
+  create-status:
+    name: Set commit status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create check run
+        uses: actions/github-script@v6
+        id: create-check-run
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const event = context.payload.client_payload.event;
+            const result = await github.rest.checks.create({
+              owner: event.repository.owner.name,
+              repo: event.repository.name,
+              name: 'CI',
+              head_sha: event.after,
+              details_url: `${context.serverUrl}/${context.repo}/actions/runs/${context.runId}`,
+              external_id: context.runId,
+              status: 'in_progress',
+            });
+    outputs:
+      id: ${{ steps.create-check-run.outputs.result.id }}
   accounts-ci:
     name: Accounts - CI
     uses: ./.github/workflows/accounts-ci.yaml
     if: ${{ github.event.client_payload.event.repository.full_name == 'webzyno/accounts' }}
+    needs: create-status
     with:
       event: ${{ toJSON(github.event.client_payload.event) }}
     secrets:
       PAT: ${{ secrets.PAT }}
+  update-check-run:
+    name: Update check run
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: accounts-ci
+    steps:
+      - name: Update check run
+        uses: actions/github-script@v6
+        id: upadte-check-run
+        env:
+          ID: ${{ needs.create-check-run.outputs.result.id }}
+          RESULT: ${{ needs.accounts-ci.result }}
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const { ID, RESULT } = process.env;
+            const event = context.payload.client_payload.event;
+            octokit.rest.checks.update({
+              owner: event.repository.owner.name,
+              repo: event.repository.name,
+              check_run_id: `${ID}`,
+              status: 'completed',
+              conclusion: `${RESULT}`,
+            });
