@@ -1,4 +1,4 @@
-name: Workflow routers
+name: Workflow router
 on:
   repository_dispatch: {}
 
