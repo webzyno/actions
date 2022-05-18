@@ -38,17 +38,29 @@ jobs:
     if: ${{ always() && github.event.client_payload.status.create }}
     needs: accounts-ci
     steps:
+      - name: Get last job
+        uses: actions/github-script@v6
+        id: get-last-job
+        with:
+          script: |
+            const result = await octokit.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+              filter: 'latest',
+            });
+            return result.jobs[0];
       - name: Update commit status
         uses: actions/github-script@v6
         id: upadte-commit-status
         env:
-          RESULT: ${{ needs.run-workflow.result }}
+          CONSLUSION: ${{ steps.get-last-job.outputs.result.conclusion }}
         with:
           github-token: ${{ secrets.PAT }}
           script: |
             // parse result
-            const { RESULT } = process.env;
-            const state = (RESULT === 'cancelled' || RESULT === 'skipped') ? 'success' : RESULT;
+            const { CONSLUSION } = process.env;
+            const state = (CONSLUSION === 'cancelled' || CONSLUSION === 'skipped') ? 'success' : CONSLUSION;
 
             const client_payload = context.payload.client_payload;
             const event = client_payload.event;
