@@ -23,10 +23,10 @@ jobs:
               description: 'In progress',
               context: client_payload.status.context,
             });
-  run-workflow:
-    name: ${{ github.event.client_payload.name }}
-    uses: ./.github/workflows/${{ github.event.client_payload.workflow }}.yaml
-    if: ${{ always() }}
+  accounts-ci:
+    name: Accounts - CI
+    uses: ./.github/workflows/actions-ci.yaml
+    if: ${{ github.event.client_payload.route == 'accounts-ci' && always() }}
     needs: create-status
     with:
       event: ${{ toJSON(github.event.client_payload.event) }}
