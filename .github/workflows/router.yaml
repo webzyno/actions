@@ -36,7 +36,7 @@ jobs:
     name: Update commit status
     runs-on: ubuntu-latest
     if: ${{ always() && github.event.client_payload.status.create }}
-    needs: run-workflow
+    needs: accounts-ci
     steps:
       - name: Update commit status
         uses: actions/github-script@v6
