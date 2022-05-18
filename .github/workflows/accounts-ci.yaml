@@ -1,0 +1,25 @@
+name: accounts - CI
+on:
+  workflow_call:
+    inputs:
+      event:
+        description: "Webhook event payload of accounts repository"
+        required: true
+        type: string
+    secrets:
+      PAT:
+        description: "Personal access token that have access to accounts repository"
+        required: true
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ fromJSON(inputs.event).repository.full_name }}
+          ref: ${{ fromJSON(inputs.event).ref }}
+          token: ${{ secrets.PAT }}
+      - name: List directories
+        run: ls -al

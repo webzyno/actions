@@ -1,10 +1,14 @@
 name: Workflow router
 on:
   repository_dispatch: {}
-
+env:
+  EVENT: ${{ toJSON(github.event.client_payload.event) }}
 jobs:
-  echo:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ github.event.action }}
-      - run: echo ${{ github.event.client_payload }}
+  accounts-ci:
+    name: Call accounts - CI workflow
+    uses: ./.github/workflows/accounts-ci.yaml
+    if: ${{ fromJSON(env.EVENT).repository.full_name == 'webzyno/accounts' }}
+    with:
+      event: ${{ env.EVENT }}
+    secrets:
+      PAT: ${{ secrets.PAT }}
