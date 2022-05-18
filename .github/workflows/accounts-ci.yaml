@@ -21,5 +21,19 @@ jobs:
           repository: ${{ fromJSON(inputs.event).repository.full_name }}
           ref: ${{ fromJSON(inputs.event).ref }}
           token: ${{ secrets.PAT }}
-      - name: List directories
-        run: ls -al
+      - uses: actions/setup-node@v3
+      - name: Build
+        run: yarn build
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ fromJSON(inputs.event).repository.full_name }}
+          ref: ${{ fromJSON(inputs.event).ref }}
+          token: ${{ secrets.PAT }}
+      - uses: actions/setup-node@v3
+      - name: Lint
+        run: yarn lint

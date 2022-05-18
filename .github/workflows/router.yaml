@@ -3,7 +3,7 @@ on:
   repository_dispatch: {}
 jobs:
   accounts-ci:
-    name: Call accounts - CI workflow
+    name: Accounts - CI
     uses: ./.github/workflows/accounts-ci.yaml
     if: ${{ github.event.client_payload.event.repository.full_name == 'webzyno/accounts' }}
     with:
