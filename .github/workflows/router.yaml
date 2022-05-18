@@ -25,7 +25,7 @@ jobs:
             });
   accounts-ci:
     name: Accounts - CI
-    uses: ./.github/workflows/actions-ci.yaml
+    uses: ./.github/workflows/accounts-ci.yaml
     if: ${{ github.event.client_payload.route == 'accounts-ci' && always() }}
     needs: create-status
     with:
