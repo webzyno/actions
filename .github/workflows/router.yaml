@@ -15,7 +15,7 @@ jobs:
             const client_payload = context.payload.client_payload;
             const event = client_payload.event;
             await github.rest.repos.createCommitStatus({
-              owner: event.repository.owner.name,
+              owner: event.repository.owner.login,
               repo: event.repository.name,
               sha: client_payload.sha,
               state: 'pending',
@@ -80,7 +80,7 @@ jobs:
             const client_payload = context.payload.client_payload;
             const event = client_payload.event;
             await github.rest.repos.createCommitStatus({
-              owner: event.repository.owner.name,
+              owner: event.repository.owner.login,
               repo: event.repository.name,
               sha: client_payload.sha,
               state,
